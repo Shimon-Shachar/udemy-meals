@@ -9,6 +9,8 @@ import Checkout from './Checkout'
 
 const Cart = (props) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const [isOrderSent, setIsOrderSent] = useState(false);
+	const [isSubmitted, setIsSubmitted] = useState(false);
   const cartCtx = useContext(CartContext);
 
   const totalAmount = `$${cartCtx.totalAmount.toFixed(2)}`;
@@ -26,10 +28,27 @@ const Cart = (props) => {
 		setIsOpen(true);
 	};
 	
+	const submitOrder = async (userData) => {
+		setIsOrderSent(true)
+		const response = await fetch('https://react-http2-66530-default-rtdb.firebaseio.com/orders.json', {
+			method: 'POST', 
+			body: JSON.stringify({
+				user: userData,
+				orderItems: cartCtx.items,
+				totalPrice: cartCtx.totalAmount  
+			}),
+		})
+		if (response.ok) {
+			setIsSubmitted(true);
+			setIsOrderSent(false);
+			
+		}
+	}
   const cartItems = (
     <ul className={classes['cart-items']}>
-      {cartCtx.items.map((item) => (
-        <CartItem
+    	{isSubmitted && <h3>Submitted!</h3>}
+      {!isOrderSent && cartCtx.items.map((item) => (
+       	<CartItem
           key={item.id}
           name={item.name}
           amount={item.amount}
@@ -58,7 +77,7 @@ const Cart = (props) => {
         	<span>Total Amount</span>
         	<span>{totalAmount}</span>
       	</div>
-      	{isOpen && <Checkout onCancel={props.onClose}/>}
+      	{isOpen && <Checkout onConfirm={submitOrder} onCancel={props.onClose}/>}
       	{!isOpen && modalActions} 	
       </div>
       
